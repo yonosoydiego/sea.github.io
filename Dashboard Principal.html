@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="C:\DDMT\SEA\logo png.png" type="image/x-png">
+
+    <title>SEA - Dashboard Principal</title>
+    <!-- Incluimos Chart.js para los gráficos de barras -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- VARIABLES DE COLOR (TEMA OSCURO POR DEFECTO) --- */
+        :root {
+            --bg-gradient: radial-gradient(circle, #1a2a40 0%, #2e3842 60%, #1f2429 100%);
+            --sidebar-bg: rgba(15, 23, 42, 0.6);
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a0aec0;
+            --text-nav: #cbd5e1;
+            --chart-grid: rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- VARIABLES PARA EL TEMA CLARO --- */
+        body.light-theme {
+            /* Fondo blanco con difuminado azul marino hacia el centro */
+            --bg-gradient: radial-gradient(circle, #ffffff 0%, #c4d7ed 50%, #1f4371 100%);
+            --sidebar-bg: rgba(26, 42, 64, 0.95); /* Mantenemos la barra oscura para contraste elegante */
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(26, 42, 64, 0.15);
+            --text-main: #1a2a40;
+            --text-muted: #4a5568;
+            --text-nav: #cbd5e1;
+            --chart-grid: rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-main);
+            display: flex;
+        }
+
+        /* --- BARRA LATERAL --- */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .brand h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #00d2ff;
+        }
+
+        .brand p {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b0c4de;
+        }
+
+        .menu-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-nav a {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            color: var(--text-nav);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-nav a:hover, .menu-nav a.active {
+            background: rgba(0, 210, 255, 0.15);
+            color: #00d2ff;
+            border-color: rgba(0, 210, 255, 0.4);
+            transform: translateX(5px);
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
+            width: calc(100% - 280px);
+            position: relative;
+        }
+
+        /* --- BOTÓN DE CAMBIO DE TEMA --- */
+        .theme-toggle-btn {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            padding: 10px 20px;
+            background: rgba(0, 210, 255, 0.2);
+            border: 1px solid #00d2ff;
+            border-radius: 20px;
+            color: #00d2ff;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .theme-toggle-btn:hover {
+            background: rgba(0, 210, 255, 0.3);
+        }
+
+        body.light-theme .theme-toggle-btn {
+            background: #1a2a40;
+            color: #ffffff;
+            border-color: #1a2a40;
+        }
+
+        .welcome-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 15px;
+        }
+
+        .welcome-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .welcome-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* --- CUADROS DE GRÁFICOS --- */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-left: 3px solid #00d2ff;
+            padding-left: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA LATERAL -->
+    <div class="sidebar">
+        <div class="brand">
+            <h1>SEA</h1>
+            <p>Administración Avanzada</p>
+        </div>
+        
+        <nav>
+            <ul class="menu-nav">
+                <li><a href="C:\DDMT\SEA\PAGINAS PRINCIPALES\inicio.html" class="active">1. INICIO</a></li>
+                <li><a href="#configuracion">2. CONFIGURACIÓN</a></li>
+                <li><a href="#ventas">3. VENTAS</a></li>
+                <li><a href="C:\DDMT\SEA\PAGINAS PRINCIPALES\module1inv.html">4. INVENTARIO</a></li>
+                <li><a href="#cuentas-cobrar">5. CUENTAS POR COBRAR</a></li>
+                <li><a href="#contabilidad">6. CONTABILIDAD</a></li>
+                <li><a href="#recursos-humanos">7. RECURSOS HUMANOS</a></li>
+                <li><a href="#logistica">8. LOGÍSTICA</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- CONTENIDO DEL DASHBOARD -->
+    <div class="main-content">
+        <!-- BOTÓN DE CAMBIO DE TEMA -->
+        <button class="theme-toggle-btn" id="themeToggle">
+            ⛅ Cambiar Vista
+        </button>
+
+        <div class="welcome-header">
+            <h2>Panel de Control General</h2>
+            <p>Bienvenido al sistema. Estado del negocio en tiempo real.</p>
+        </div>
+
+        <!-- SECCIÓN DE GRÁFICOS -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>Venta Diaria (Últimas Horas)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Venta Semanal</h3>
+                <div class="chart-wrapper">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Venta Anual</h3>
+                <div class="chart-wrapper">
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT JAVASCRIPT -->
+    <script>
+        // --- LÓGICA PARA INTERCAMBIAR EL TEMA ---
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const bodyElement = document.body;
+
+        themeToggleBtn.addEventListener('click', () => {
+            bodyElement.classList.toggle('light-theme');
+            
+            // Actualizar los colores de los gráficos dinámicamente al cambiar el tema
+            const isLight = bodyElement.classList.contains('light-theme');
+            const newTickColor = isLight ? '#1a2a40' : '#cbd5e1';
+            const newGridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+
+            [dailyChart, weeklyChart, yearlyChart].forEach(chart => {
+                chart.options.scales.x.ticks.color = newTickColor;
+                chart.options.scales.y.ticks.color = newTickColor;
+                chart.options.scales.x.grid.color = newGridColor;
+                chart.options.scales.y.grid.color = newGridColor;
+                chart.update(); // Redibuja el gráfico con la nueva paleta
+            });
+        });
+
+        // --- CONFIGURACIÓN BASE DE LOS GRÁFICOS ---
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#cbd5e1' }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#cbd5e1' }
+                }
+            }
+        };
+
+        const barColor = 'rgba(0, 210, 255, 0.4)';
+        const barBorderColor = '#00d2ff';
+
+        // Inicialización de gráficos globales para poder modificarlos en el evento click
+        const dailyChart = new Chart(document.getElementById('dailyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['08:00', '11:00', '14:00', '17:00', '20:00'],
+                datasets: [{ data: [420, 780, 1150, 960, 610], backgroundColor: barColor, borderColor: barBorderColor, borderWidth: 1.5, borderRadius: 4 }]
+            },
+            options: chartOptions
+        });
+
+        const weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                datasets: [{ data: [5400, 6200, 5800, 7100, 8500, 9200], backgroundColor: barColor, borderColor: barBorderColor, borderWidth: 1.5, borderRadius: 4 }]
+            },
+            options: chartOptions
+        });
+
+        const yearlyChart = new Chart(document.getElementById('yearlyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['2022', '2023', '2024', '2025', '2026'],
+                datasets: [{ data: [145000, 168000, 192000, 215000, 260000], backgroundColor: barColor, borderColor: barBorderColor, borderWidth: 1.5, borderRadius: 4 }]
+            },
+            options: chartOptions
+        });
+    </script>
+</body>
+</html>

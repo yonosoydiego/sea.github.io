@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA - Módulo de Inventario</title>
+    <link rel="shortcut icon" href="C:\DDMT\SEA\logo.ico" type="image/x-icon">
+    <!-- Incluimos Chart.js para los gráficos de inventario -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- VARIABLES DE COLOR (TEMA OSCURO POR DEFECTO) --- */
+        :root {
+            --bg-gradient: radial-gradient(circle, #1a2a40 0%, #2e3842 60%, #1f2429 100%);
+            --sidebar-bg: rgba(15, 23, 42, 0.6);
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a0aec0;
+            --text-nav: #cbd5e1;
+            --chart-grid: rgba(255, 255, 255, 0.05);
+            --table-header: rgba(15, 23, 42, 0.4);
+            --table-row-hover: rgba(255, 255, 255, 0.03);
+        }
+
+        /* --- VARIABLES PARA EL TEMA CLARO --- */
+        body.light-theme {
+            --bg-gradient: radial-gradient(circle, #ffffff 0%, #c4d7ed 50%, #1f4371 100%);
+            --sidebar-bg: rgba(26, 42, 64, 0.95);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(26, 42, 64, 0.15);
+            --text-main: #1a2a40;
+            --text-muted: #4a5568;
+            --text-nav: #cbd5e1;
+            --chart-grid: rgba(0, 0, 0, 0.05);
+            --table-header: rgba(26, 42, 64, 0.1);
+            --table-row-hover: rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-main);
+            display: flex;
+        }
+
+        /* --- BARRA LATERAL --- */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .brand h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #00d2ff;
+        }
+
+        .brand p {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b0c4de;
+        }
+
+        .menu-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-nav a {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            color: var(--text-nav);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-nav a:hover, .menu-nav a.active {
+            background: rgba(0, 210, 255, 0.15);
+            color: #00d2ff;
+            border-color: rgba(0, 210, 255, 0.4);
+            transform: translateX(5px);
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
+            width: calc(100% - 280px);
+            position: relative;
+        }
+
+        /* --- BARRA SUPERIOR (HEADER INTERNO) --- */
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+        }
+
+        .welcome-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .welcome-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-action {
+            padding: 10px 16px;
+            background: #00d2ff;
+            border: none;
+            border-radius: 6px;
+            color: #1a2a40;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-action:hover {
+            background: #00b4dc;
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle-btn {
+            padding: 10px 16px;
+            background: rgba(0, 210, 255, 0.15);
+            border: 1px solid #00d2ff;
+            border-radius: 20px;
+            color: #00d2ff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        body.light-theme .theme-toggle-btn {
+            background: #1a2a40;
+            color: #ffffff;
+            border-color: #1a2a40;
+        }
+
+        body.light-theme .btn-action {
+            background: #1a2a40;
+            color: #ffffff;
+        }
+
+        body.light-theme .btn-action:hover {
+            background: #233954;
+        }
+
+        /* --- TARJETAS KPI (RESUMEN SUPERIOR) --- */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-card p {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .kpi-warning { border-left: 4px solid #ff9f43; }
+        .kpi-danger { border-left: 4px solid #ee5253; }
+        .kpi-warning h3 { color: #ff9f43; }
+        .kpi-danger h3 { color: #ee5253; }
+
+        /* --- SECCIÓN DE GRÁFICOS Y TABLAS --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .dashboard-grid-equal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .panel-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-left: 3px solid #00d2ff;
+            padding-left: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 240px;
+            width: 100%;
+        }
+
+        /* --- ESTILOS DE TABLAS ADMINISTRATIVAS --- */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--table-header);
+            padding: 12px;
+            font-weight: 600;
+            color: var(--text-nav);
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: var(--table-row-hover);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .badge-warning { background: rgba(255, 159, 67, 0.2); color: #ff9f43; }
+        .badge-danger { background: rgba(238, 82, 83, 0.2); color: #ee5253; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+        .btn-table-action {
+            background: transparent;
+            border: 1px solid #00d2ff;
+            color: #00d2ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn-table-action:hover {
+            background: #00d2ff;
+            color: #1a2a40;
+        }
+
+        body.light-theme .btn-table-action {
+            border-color: #1a2a40;
+            color: #1a2a40;
+        }
+        body.light-theme .btn-table-action:hover {
+            background: #1a2a40;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA LATERAL -->
+    <div class="sidebar">
+        <div class="brand">
+            <h1>SEA</h1>
+            <p>Administración Avanzada</p>
+        </div>
+        
+        <nav>
+            <ul class="menu-nav">
+                <li><a href="C:\DDMT\SEA\PAGINAS PRINCIPALES\Dashboard Principal.html">1. INICIO</a></li>
+                <li><a href="#configuracion">2. CONFIGURACIÓN</a></li>
+                <li><a href="#ventas">3. VENTAS</a></li>
+                <li><a href="C:\DDMT\SEA\PAGINAS PRINCIPALES\module1inv.html" class="active">4. INVENTARIO</a></li>
+                <li><a href="#cuentas-cobrar">5. CUENTAS POR COBRAR</a></li>
+                <li><a href="#contabilidad">6. CONTABILIDAD</a></li>
+                <li><a href="#recursos-humanos">7. RECURSOS HUMANOS</a></li>
+                <li><a href="#logistica">8. LOGÍSTICA</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- CONTENIDO DEL DASHBOARD DE INVENTARIO -->
+    <div class="main-content">
+        
+        <!-- BARRA SUPERIOR -->
+        <div class="module-header">
+            <div class="welcome-header">
+                <h2>Control de Inventario y Almacén</h2>
+                <p>Monitoreo de existencias, auditoría y rotación de productos.</p>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-action">+ Registrar Producto</button>
+                <button class="theme-toggle-btn" id="themeToggle">⛅ Cambiar Vista</button>
+            </div>
+        </div>
+
+        <!-- INDICADORES CLAVE (KPIs) -->
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <p>Total Artículos (SKU)</p>
+                <h3>1,240</h3>
+            </div>
+            <div class="kpi-card">
+                <p>Valor de Almacén</p>
+                <h3>$45,280.00</h3>
+            </div>
+            <div class="kpi-card kpi-warning">
+                <p>Stock Mínimo</p>
+                <h3>14 Items</h3>
+            </div>
+            <div class="kpi-card kpi-danger">
+                <p>Agotados</p>
+                <h3>3 Items</h3>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS DE INVENTARIO -->
+        <div class="dashboard-grid">
+            <!-- Gráfico 1: Historial Movimientos -->
+            <div class="panel-card">
+                <h3>Flujo de Almacén: Entradas vs. Salidas</h3>
+                <div class="chart-wrapper">
+                    <canvas id="flowChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Categorías -->
+            <div class="panel-card">
+                <h3>Distribución por Categoría</h3>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLAS OPERATIVAS -->
+        <div class="dashboard-grid-equal">
+            <!-- Tabla 1: Reposición Urgente -->
+            <div class="panel-card">
+                <h3>Reposición Urgente de Stock</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Actual</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Envase Helado 1L</td>
+                                <td>5 und</td>
+                                <td><span class="badge badge-danger">Agotado</span></td>
+                                <td><button class="btn-table-action">Pedir</button></td>
+                            </tr>
+                            <tr>
+                                <td>Sirope de Chocolate</td>
+                                <td>12 und</td>
+                                <td><span class="badge badge-warning">Mínimo</span></td>
+                                <td><button class="btn-table-action">Pedir</button></td>
+                            </tr>
+                            <tr>
+                                <td>Cucharas Plásticas</td>
+                                <td>0 und</td>
+                                <td><span class="badge badge-danger">Agotado</span></td>
+                                <td><button class="btn-table-action">Pedir</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla 2: Últimos Movimientos -->
+            <div class="panel-card">
+                <h3>Últimos Movimientos de Almacén</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Acción</th>
+                                <th>Usuario</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Hoy 14:20</td>
+                                <td>Despacho Venta #1042</td>
+                                <td>Caja 01</td>
+                                <td><span class="badge badge-danger">Salida</span></td>
+                            </tr>
+                            <tr>
+                                <td>Hoy 11:05</td>
+                                <td>Auditoría Mensual</td>
+                                <td>Supervisor</td>
+                                <td><span class="badge badge-warning">Ajuste</span></td>
+                            </tr>
+                            <tr>
+                                <td>Ayer 16:45</td>
+                                <td>Compra Lote #882</td>
+                                <td>Admin</td>
+                                <td><span class="badge badge-success">Entrada</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT CONFIGURACIÓN INTERACTIVA -->
+    <script>
+        // --- INTERCAMBIO DE TEMAS ---
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const bodyElement = document.body;
+
+        themeToggleBtn.addEventListener('click', () => {
+            bodyElement.classList.toggle('light-theme');
+            
+            const isLight = bodyElement.classList.contains('light-theme');
+            const newColor = isLight ? '#1a2a40' : '#cbd5e1';
+            const newGridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+
+            // Modificar los ejes del gráfico de líneas
+            flowChart.options.scales.x.ticks.color = newColor;
+            flowChart.options.scales.y.ticks.color = newColor;
+            flowChart.options.scales.x.grid.color = newGridColor;
+            flowChart.options.scales.y.grid.color = newGridColor;
+            
+            flowChart.update();
+            categoryChart.update();
+        });
+
+        // --- GRÁFICO 1: ENTRADAS VS SALIDAS (LÍNEAS) ---
+        const flowChart = new Chart(document.getElementById('flowChart'), {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May'],
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: [120, 150, 180, 90, 210],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Salidas',
+                        data: [100, 130, 190, 80, 140],
+                        borderColor: '#ee5253',
+                        backgroundColor: 'rgba(238, 82, 83, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#cbd5e1' } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#cbd5e1' } }
+                }
+            }
+        });
+
+        // --- GRÁFICO 2: DISTRIBUCIÓN (DONA) ---
+        const categoryChart = new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Materia Prima', 'Envases', 'Herramientas'],
+                datasets: [{
+                    data: [55, 30, 15],
+                    backgroundColor: ['#00d2ff', '#334155', '#ff9f43'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#b0c4de', boxWidth: 12 }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

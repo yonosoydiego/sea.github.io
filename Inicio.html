@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA - Inicio de Sesión</title>
+    <link rel="shortcut icon" href="C:\DDMT\SEA\logo png.png" type="image/x-png">
+    <style>
+        /* --- VARIABLES DE COLOR (TEMA OSCURO POR DEFECTO) --- */
+        :root {
+            --bg-gradient: radial-gradient(circle, #1a2a40 0%, #2e3842 60%, #1f2429 100%);
+            --container-bg: rgba(255, 255, 255, 0.07);
+            --container-border: rgba(255, 255, 255, 0.1);
+            --text-title: #00d2ff;
+            --text-subtitle: #b0c4de;
+            --text-label: #cbd5e1;
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-text: #ffffff;
+            --link-color: #a0aec0;
+            --toggle-btn-bg: rgba(0, 210, 255, 0.15);
+            --toggle-btn-text: #00d2ff;
+            --toggle-btn-border: #00d2ff;
+        }
+
+        /* --- VARIABLES PARA EL TEMA CLARO --- */
+        body.light-theme {
+            /* Fondo blanco con difuminado azul marino en el centro */
+            --bg-gradient: radial-gradient(circle, #ffffff 0%, #c4d7ed 50%, #1f4371 100%);
+            --container-bg: rgba(255, 255, 255, 0.85);
+            --container-border: rgba(26, 42, 64, 0.15);
+            --text-title: #1a2a40;
+            --text-subtitle: #334155;
+            --text-label: #1e293b;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-border: rgba(26, 42, 64, 0.3);
+            --input-text: #1a2a40;
+            --link-color: #475569;
+            --toggle-btn-bg: #1a2a40;
+            --toggle-btn-text: #ffffff;
+            --toggle-btn-border: #1a2a40;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Suaviza la transición de colores al cambiar de tema */
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--input-text);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- BOTÓN FLOTANTE DE CAMBIO DE TEMA --- */
+        .theme-toggle-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            padding: 10px 20px;
+            background: var(--toggle-btn-bg);
+            border: 1px solid var(--toggle-btn-border);
+            border-radius: 20px;
+            color: var(--toggle-btn-text);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle-btn:active {
+            transform: translateY(0);
+        }
+
+        /* --- CONTENEDOR LOGIN --- */
+        .login-container {
+            background: var(--container-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--container-border);
+            padding: 40px 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            z-index: 5;
+        }
+
+        .header-zone {
+            margin-bottom: 30px;
+        }
+
+        .header-zone h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--text-title);
+            margin-bottom: 5px;
+        }
+
+        .header-zone p {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-subtitle);
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-label);
+            margin-bottom: 8px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            color: var(--input-text);
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00d2ff;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+        }
+
+        body.light-theme .form-group input:focus {
+            border-color: #1a2a40;
+            box-shadow: 0 0 8px rgba(26, 42, 64, 0.2);
+        }
+
+        .actions {
+            margin-top: 25px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #00d2ff;
+            border: none;
+            border-radius: 6px;
+            color: #1a2a40;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        .btn-submit:hover {
+            background: #00b4dc;
+        }
+
+        body.light-theme .btn-submit {
+            background: #1a2a40;
+            color: #ffffff;
+        }
+
+        body.light-theme .btn-submit:hover {
+            background: #233954;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .forgot-password {
+            margin-top: 20px;
+            display: block;
+            font-size: 0.85rem;
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            color: #00d2ff;
+            text-decoration: underline;
+        }
+
+        body.light-theme .forgot-password:hover {
+            color: #1a2a40;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BOTÓN INTERACTIVO PARA CAMBIAR TEMA -->
+    <button class="theme-toggle-btn" id="themeToggle">⛅ Cambiar Vista</button>
+
+    <div class="login-container">
+        <div class="header-zone">
+            <h1>SEA</h1>
+            <p>La evolución de una administración avanzada</p>
+        </div>
+
+        <form action="#" method="POST">
+            <div class="form-group">
+                <label for="company-code">CÓDIGO ÚNICO DE EMPRESA</label>
+                <input type="text" id="company-code" name="company-code" placeholder="Ej: CMP-1024" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="username">USUARIO</label>
+                <input type="text" id="username" name="username" placeholder="Nombre de usuario" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">CONTRASEÑA</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn-submit">Ingresar al Sistema</button>
+                <a href="#" class="forgot-password">¿Olvidó su contraseña?</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- SCRIPT DE JAVASCRIPT PARA ALTERNAR EL TEMA -->
+    <script>
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const bodyElement = document.body;
+
+        themeToggleBtn.addEventListener('click', () => {
+            bodyElement.classList.toggle('light-theme');
+        });
+    </script>
+</body>
+</html>
